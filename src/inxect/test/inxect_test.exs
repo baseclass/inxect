@@ -2,20 +2,31 @@ defmodule InxectTest do
   use ExUnit.Case
   doctest Inxect
 
-  test "the truth" do
+  defmodule LocalizerStub do
+    @behaviour Localizer
+
+    def getHello do
+      "test"
+    end
+  end
+
+  test "with injection" do
     assert Greeter.sayHello("daniel") == {:ok, "hello daniel" }
+  end
+
+  test "with stub" do
+    assert Greeter.test_sayHello("daniel", LocalizerStub) == {:ok, "test daniel" }
   end
 end
 
 defmodule Greeter do
-  @spec sayHello(String.t) :: { :ok, String.t }
-  def sayHello(who) do
-    sayHello(who, EnglishLocalizer)
-  end
+  use Inxect.DI
   
-  @spec sayHello(String.t,atom) :: { :ok, String.t }
-  defp sayHello(who, module) do
-    { :ok, "#{module.getHello()} #{who}"}
+  inject {:localizer, Localizer} do
+    #@spec sayHello(String.t,atom) :: { :ok, String.t }
+    def sayHello(who, localizer) do
+      { :ok, "#{localizer.getHello()} #{who}"}
+    end
   end
 end
 
