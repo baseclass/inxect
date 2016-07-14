@@ -1,28 +1,25 @@
 defmodule Inxect do
     defmodule DI do
         defmacro __using__(_) do
+            Module.register_attribute(__CALLER__.module, :injects, accumulate: true)
             quote do
                 import Inxect.DI
-
-                @before_compile Inxect.DI
-                Module.register_attribute(__MODULE__, :injects, accumulate: true)
             end
         end
 
         defmacro inject(inject) do
-            quote do
-                @injects unquote(inject)
-            end
+            Module.put_attribute(__CALLER__.module, :injects, inject)
         end
 
         defmacro defi(head, body) do
+            injects = Module.get_attribute(__CALLER__.module, :injects)
             block = quote do
                         def unquote(head) do
                             unquote(body[:do])
                         end
                     end
             
-            publicFun = create_without_dependencies(block)
+            publicFun = create_without_dependencies(injects, block)
             privateFun = make_private(block)
             testFun = create_test_fun(block)
             IO.puts(Macro.to_string(publicFun))
@@ -33,11 +30,6 @@ defmodule Inxect do
                 unquote(privateFun)
                 unquote(testFun)
             end
-        end
-
-        defmacro __before_compile__(env) do
-            injects        = Module.get_attribute(env.module, :injects)
-            IO.inspect(injects)
         end
 
         def resolve(:localizer) do
@@ -60,15 +52,12 @@ defmodule Inxect do
                             end)
         end
 
-        defp create_without_dependencies(block) do
+        defp create_without_dependencies(injects, block) do
             Macro.prewalk(block,fn 
-                                ({:def, opt, [ { name, l, args } , impl ] }) ->
-                                    IO.puts("-------------")
-                                    nargs = remove_dependencies(args)
-                                    pass = replace_dependencies(args)
+                                ({:def, opt, [ { name, l, args } , _impl ] }) ->
+                                    nargs = remove_all_dependencies(injects, args)
+                                    pass = replace_all_dependencies(injects, args)
                                     impl = [do: {name, [], pass}]
-                                    IO.inspect(impl)
-                                    IO.puts("-------------")
                                     {:def, opt, [ { name, l, nargs }, impl ] }
                                 ({:spec, a, b }) ->
                                     IO.puts("-------------")
@@ -79,23 +68,39 @@ defmodule Inxect do
                             end)
         end
 
-        defp replace_dependencies([ {:localizer, _, _ } | t]) do
-            [ {:resolve, [], [:localizer]} ] ++ replace_dependencies(t)
+        defp replace_all_dependencies([ h | t ], args) do
+            args = replace_dependencies(h, args)
+            replace_all_dependencies(t, args)
         end
-        defp replace_dependencies([h | t]) do
-            [ h ] ++ replace_dependencies(t)
+        defp replace_all_dependencies([], args) do
+            args
         end
-        defp replace_dependencies([]) do
+
+        defp replace_dependencies(dep, [ {dep, _, _ } | t]) do
+            [ {:resolve, [], [dep]} ] ++ replace_dependencies(dep, t)
+        end
+        defp replace_dependencies(dep, [h | t]) do
+            [ h ] ++ replace_dependencies(dep, t)
+        end
+        defp replace_dependencies(_dep, []) do
             []
         end
 
-        defp remove_dependencies([ {:localizer, _, _ } | t]) do
-            remove_dependencies(t)
+        defp remove_all_dependencies([ h | t ], args) do
+            args = remove_dependencies(h, args)
+            remove_all_dependencies(t, args)
         end
-        defp remove_dependencies([h | t]) do
-            [ h ] ++ remove_dependencies(t)
+        defp remove_all_dependencies([], args) do
+            args
         end
-        defp remove_dependencies([]) do
+
+        defp remove_dependencies(dep, [ {dep, _, _ } | t]) do
+            remove_dependencies(dep, t)
+        end
+        defp remove_dependencies(dep, [h | t]) do
+            [ h ] ++ remove_dependencies(dep, t)
+        end
+        defp remove_dependencies(_dep, []) do
             []
         end
     end
