@@ -1,3 +1,7 @@
+defmodule Localizer do
+  @callback getHello :: String.t
+end
+
 defmodule InxectTest do
   use ExUnit.Case
   doctest Inxect
@@ -21,17 +25,12 @@ end
 
 defmodule Greeter do
   use Inxect.DI
-  
-  inject {:localizer, Localizer} do
-    #@spec sayHello(String.t,atom) :: { :ok, String.t }
-    def sayHello(who, localizer) do
-      { :ok, "#{localizer.getHello()} #{who}"}
-    end
-  end
-end
+  inject :localizer
 
-defmodule Localizer do
-  @callback getHello :: String.t
+  #@spec sayHello(String.t,atom) :: { :ok, String.t }
+  defi sayHello(who, localizer) do
+    { :ok, "#{localizer.getHello()} #{who}"}
+  end
 end
 
 defmodule EnglishLocalizer do

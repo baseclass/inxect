@@ -3,10 +3,25 @@ defmodule Inxect do
         defmacro __using__(_) do
             quote do
                 import Inxect.DI
+
+                @before_compile Inxect.DI
+                Module.register_attribute(__MODULE__, :injects, accumulate: true)
             end
         end
 
-        defmacro inject(_opts, do: block) do
+        defmacro inject(inject) do
+            quote do
+                @injects unquote(inject)
+            end
+        end
+
+        defmacro defi(head, body) do
+            block = quote do
+                        def unquote(head) do
+                            unquote(body[:do])
+                        end
+                    end
+            
             publicFun = create_without_dependencies(block)
             privateFun = make_private(block)
             testFun = create_test_fun(block)
@@ -18,6 +33,11 @@ defmodule Inxect do
                 unquote(privateFun)
                 unquote(testFun)
             end
+        end
+
+        defmacro __before_compile__(env) do
+            injects        = Module.get_attribute(env.module, :injects)
+            IO.inspect(injects)
         end
 
         def resolve(:localizer) do
