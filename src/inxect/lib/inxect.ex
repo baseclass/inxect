@@ -1,8 +1,55 @@
-defmodule Inxect do    
+defmodule Inxect do
+    @moduledoc ~S"""
+    Macros for making dependency injection easier
+
+    ## Example
+
+    defmodule Localizer do
+        @callback getHello :: String.t
+    end
+
+    defmodule Greeter do
+        use Inxect.DI
+        inject :localizer
+
+        @spec sayHello(String.t) :: { :ok, String.t }
+        defi sayHello(who, localizer) do
+            { :ok, #{localizer.getHello()} #{who}}
+        end
+    end
+
+    defmodule EnglishLocalizer do
+        @behaviour Localizer
+        
+        @spec getHello :: String.t
+        def getHello do
+            hello
+        end
+    end
+
+    defmodule Registry do
+        use Inxect.Registry
+        
+        register { :localizer, EnglishLocalizer }
+    end
+
+    iex(2)> Greeter.sayHello("Daniel")
+    {:ok, "hello Daniel"}
+
+    """
+
     defmodule DI do
+        @moduledoc """
+            Macros which replace function arguments with implementations using dependency injection.
+            Use this module to inject dependencies and Inxect.Registry to create a registry.
+        """ 
+
+        @doc false
         defprotocol Registry do
             def resolve(dependency)
         end
+        
+        @doc false
         defmacro __using__(_) do
             Module.register_attribute(__CALLER__.module, :injects, accumulate: true)
             quote do
@@ -10,10 +57,38 @@ defmodule Inxect do
             end
         end
 
+        @doc """
+            Specify a function parameter which should be injected 
+        """
+        @spec inject(atom) :: nil
         defmacro inject(inject) do
             Module.put_attribute(__CALLER__.module, :injects, inject)
+            nil
         end
 
+        @doc ~S"""
+            Specify a function where injection should be applied, all the argument names
+            which have been marked for injection with inject/1 will be replaced.
+
+            ## Example
+
+            defi sayHello(who, localizer) do
+                { :ok, "#{localizer.getHello()} #{who}"}
+            end
+
+            will be compiled like that:
+
+            def sayHello(who) do
+                sayHello(who, resolve(:localizer))
+            end
+            defp sayHello(who, localizer) do
+                {:ok, "#{localizer.getHello()} #{who}"}
+            end
+
+            def test_sayHello(who, localizer) do
+                {:ok, "#{localizer.getHello()} #{who}"}
+            end
+        """
         defmacro defi(head, body) do
             injects = Module.get_attribute(__CALLER__.module, :injects)
             block = quote do
@@ -35,6 +110,7 @@ defmodule Inxect do
             end
         end
 
+        @doc false
         def resolve(dependency) do
             Registry.resolve(dependency)
         end
@@ -104,6 +180,19 @@ defmodule Inxect do
     end
 
     defmodule Registry do
+        @moduledoc """
+        DSL to implement a registry.
+
+        ## Example
+
+        defmodule Registry do
+            use Inxect.Registry
+            
+            register { :localizer, EnglishLocalizer }
+        end
+        """ 
+
+        @doc false
         defmacro __using__(_) do
             Module.register_attribute(__CALLER__.module, :registrations, accumulate: true)
             quote do
@@ -112,11 +201,21 @@ defmodule Inxect do
                 @before_compile Inxect.Registry
             end
         end
+
+        @doc """
+            Register a dependencency
+
+            ## Example
+            register { :localizer, EnglishLocalizer }
+        """
+        @spec register(reg :: { atom, atom }) :: any
         defmacro register(reg) do
             Module.put_attribute(__CALLER__.module, :registrations, reg)
             quote do
             end
         end
+
+        @doc false
         defmacro __before_compile__(env) do
             regs = Module.get_attribute(env.module, :registrations)
             
