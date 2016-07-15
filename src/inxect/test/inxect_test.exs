@@ -21,6 +21,16 @@ defmodule InxectTest do
   test "with stub" do
     assert Greeter.test_sayHello("daniel", LocalizerStub) == {:ok, "test daniel" }
   end
+
+  test "without injection fails" do
+     assert_raise UndefinedFunctionError, fn -> 
+      Greeter.sayHello("daniel", LocalizerStub)
+     end
+  end
+
+  test "public functions" do
+    assert Greeter.__info__(:functions) == [sayHello: 1, test_sayHello: 2]
+  end
 end
 
 defmodule Greeter do
