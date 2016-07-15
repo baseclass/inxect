@@ -1,6 +1,6 @@
 # Inxect
 
-**TODO: Add description**
+Package to make dependency injection easier, see documentation for more infos
 
 ## Installation
 
@@ -11,14 +11,6 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
     ```elixir
     def deps do
       [{:inxect, "~> 0.1.0"}]
-    end
-    ```
-
-  2. Ensure `inxect` is started before your application:
-
-    ```elixir
-    def application do
-      [applications: [:inxect]]
     end
     ```
 
