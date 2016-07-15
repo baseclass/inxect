@@ -33,6 +33,14 @@ defmodule InxectTest do
   end
 end
 
+defmodule Registry do
+  defimpl Inxect.DI.Registry, for: Atom do
+    def resolve(:localizer) do
+      EnglishLocalizer
+    end
+  end
+end
+
 defmodule Greeter do
   use Inxect.DI
   inject :localizer

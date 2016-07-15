@@ -1,5 +1,9 @@
 defmodule Inxect do
+    
     defmodule DI do
+        defprotocol Registry do
+            def resolve(dependency)
+        end
         defmacro __using__(_) do
             Module.register_attribute(__CALLER__.module, :injects, accumulate: true)
             quote do
@@ -32,8 +36,8 @@ defmodule Inxect do
             end
         end
 
-        def resolve(:localizer) do
-            EnglishLocalizer
+        def resolve(dependency) do
+            Registry.resolve(dependency)
         end
 
         defp make_private(block) do
