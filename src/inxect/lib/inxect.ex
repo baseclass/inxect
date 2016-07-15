@@ -62,11 +62,6 @@ defmodule Inxect do
                                     pass = replace_all_dependencies(injects, args)
                                     impl = [do: {name, [], pass}]
                                     {:def, opt, [ { name, l, nargs }, impl ] }
-                                ({:spec, a, b }) ->
-                                    IO.puts("-------------")
-                                    IO.puts(Macro.to_string(b))
-                                    IO.puts("-------------")
-                                    {:spec, a, b }
                                 node -> node
                             end)
         end
@@ -107,7 +102,7 @@ defmodule Inxect do
             []
         end
     end
-    
+
     defmodule Registry do
         defmacro __using__(_) do
             Module.register_attribute(__CALLER__.module, :registrations, accumulate: true)
