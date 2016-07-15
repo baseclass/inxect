@@ -27,7 +27,7 @@ defmodule Greeter do
   use Inxect.DI
   inject :localizer
 
-  #@spec sayHello(String.t,atom) :: { :ok, String.t }
+  @spec sayHello(String.t) :: { :ok, String.t }
   defi sayHello(who, localizer) do
     { :ok, "#{localizer.getHello()} #{who}"}
   end
