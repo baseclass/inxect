@@ -4,44 +4,44 @@ defmodule Inxect do
 
     ## Example
 
-    defmodule Localizer do
-        @callback getHello :: String.t
-    end
-
-    defmodule Greeter do
-        use Inxect.DI
-        inject :localizer
-
-        @spec sayHello(String.t) :: { :ok, String.t }
-        defi sayHello(who, localizer) do
-            { :ok, #{localizer.getHello()} #{who}}
+        defmodule Localizer do
+            @callback getHello :: String.t
         end
-    end
 
-    defmodule EnglishLocalizer do
-        @behaviour Localizer
-        
-        @spec getHello :: String.t
-        def getHello do
-            hello
+        defmodule Greeter do
+            use Inxect.DI
+            inject :localizer
+
+            @spec sayHello(String.t) :: { :ok, String.t }
+            defi sayHello(who, localizer) do
+                { :ok, \#{localizer.getHello()} \#{who}}
+            end
         end
-    end
 
-    defmodule Registry do
-        use Inxect.Registry
-        
-        register { :localizer, EnglishLocalizer }
-    end
+        defmodule EnglishLocalizer do
+            @behaviour Localizer
+            
+            @spec getHello :: String.t
+            def getHello do
+                hello
+            end
+        end
 
-    iex(2)> Greeter.sayHello("Daniel")
-    {:ok, "hello Daniel"}
+        defmodule Registry do
+            use Inxect.Registry
+            
+            register { :localizer, EnglishLocalizer }
+        end
+
+        iex(2)> Greeter.sayHello("Daniel")
+        { :ok, "hello Daniel" }
 
     """
 
     defmodule DI do
         @moduledoc """
-            Macros which replace function arguments with implementations using dependency injection.
-            Use this module to inject dependencies and Inxect.Registry to create a registry.
+        Macros which replace function arguments with implementations using dependency injection.
+        Use this module to inject dependencies and Inxect.Registry to create a registry.
         """ 
 
         @doc false
@@ -58,7 +58,7 @@ defmodule Inxect do
         end
 
         @doc """
-            Specify a function parameter which should be injected 
+        Specify a function parameter which should be injected 
         """
         @spec inject(atom) :: nil
         defmacro inject(inject) do
@@ -67,22 +67,22 @@ defmodule Inxect do
         end
 
         @doc ~S"""
-            Specify a function where injection should be applied, all the argument names
-            which have been marked for injection with inject/1 will be replaced.
+        Specify a function where injection should be applied, all the argument names
+        which have been marked for injection with inject/1 will be replaced.
 
-            ## Example
+        ## Example
 
             defi sayHello(who, localizer) do
-                { :ok, "#{localizer.getHello()} #{who}"}
+                { :ok, "\#{localizer.getHello()} \#{who}"}
             end
 
-            will be compiled like that:
+        will be compiled like that:
 
             def sayHello(who) do
                 sayHello(who, resolve(:localizer))
             end
             defp sayHello(who, localizer) do
-                {:ok, "#{localizer.getHello()} #{who}"}
+                {:ok, "\#{localizer.getHello()} \#{who}"}
             end
 
             def(test_sayHello(who, localizer)) do
@@ -183,11 +183,11 @@ defmodule Inxect do
 
         ## Example
 
-        defmodule Registry do
-            use Inxect.Registry
-            
-            register { :localizer, EnglishLocalizer }
-        end
+            defmodule Registry do
+                use Inxect.Registry
+                
+                register { :localizer, EnglishLocalizer }
+            end
         """ 
 
         @doc false
@@ -201,9 +201,9 @@ defmodule Inxect do
         end
 
         @doc """
-            Register a dependencency
+        Register a dependencency
 
-            ## Example
+        ## Example
             register { :localizer, EnglishLocalizer }
         """
         @spec register(reg :: { atom, atom }) :: any
