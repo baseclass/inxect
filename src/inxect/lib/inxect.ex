@@ -85,8 +85,8 @@ defmodule Inxect do
                 {:ok, "#{localizer.getHello()} #{who}"}
             end
 
-            def test_sayHello(who, localizer) do
-                {:ok, "#{localizer.getHello()} #{who}"}
+            def(test_sayHello(who, localizer)) do
+                sayHello(who, localizer)
             end
         """
         defmacro defi(head, body) do
@@ -100,9 +100,6 @@ defmodule Inxect do
             publicFun = create_without_dependencies(injects, block)
             privateFun = make_private(block)
             testFun = create_test_fun(block)
-            IO.puts(Macro.to_string(publicFun))
-            IO.puts(Macro.to_string(privateFun))
-            IO.puts(Macro.to_string(testFun))
             quote do
                 unquote(publicFun)
                 unquote(privateFun)
@@ -125,7 +122,8 @@ defmodule Inxect do
 
         defp create_test_fun(block) do
             Macro.prewalk(block,fn 
-                                ({:def, opt, [ { name, l, args } , impl ] }) ->
+                                ({:def, opt, [ { name, l, args } , _impl ] }) ->
+                                    impl = [do: {name, [], args}]
                                     {:def, opt, [ { String.to_atom("test_#{name}"), l, args }, impl ] }
                                 node -> node
                             end)
@@ -220,15 +218,13 @@ defmodule Inxect do
             regs = Module.get_attribute(env.module, :registrations)
             
             compiled_regs = compile_dependencies(regs)
-            IO.inspect(compiled_regs)
-
+            
             protoclImpl = quote do
                                 defimpl Inxect.DI.Registry, for: Atom do
                                     unquote_splicing(compiled_regs)
                                 end
                             end
             
-            IO.puts(protoclImpl |> Macro.to_string)
             protoclImpl
         end
         defp compile_dependencies([ { key, dependency } | t]) do
