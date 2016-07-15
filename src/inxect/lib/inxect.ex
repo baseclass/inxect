@@ -1,5 +1,4 @@
-defmodule Inxect do
-    
+defmodule Inxect do    
     defmodule DI do
         defprotocol Registry do
             def resolve(dependency)
@@ -105,6 +104,48 @@ defmodule Inxect do
             [ h ] ++ remove_dependencies(dep, t)
         end
         defp remove_dependencies(_dep, []) do
+            []
+        end
+    end
+    
+    defmodule Registry do
+        defmacro __using__(_) do
+            Module.register_attribute(__CALLER__.module, :registrations, accumulate: true)
+            quote do
+                import Inxect.Registry
+                
+                @before_compile Inxect.Registry
+            end
+        end
+        defmacro register(reg) do
+            Module.put_attribute(__CALLER__.module, :registrations, reg)
+            quote do
+            end
+        end
+        defmacro __before_compile__(env) do
+            regs = Module.get_attribute(env.module, :registrations)
+            
+            compiled_regs = compile_dependencies(regs)
+            IO.inspect(compiled_regs)
+
+            protoclImpl = quote do
+                                defimpl Inxect.DI.Registry, for: Atom do
+                                    unquote_splicing(compiled_regs)
+                                end
+                            end
+            
+            IO.puts(protoclImpl |> Macro.to_string)
+            protoclImpl
+        end
+        defp compile_dependencies([ { key, dependency } | t]) do
+            reg = quote do
+                    def resolve(unquote(key)) do
+                        unquote(dependency)
+                    end
+                  end
+            [reg] ++ compile_dependencies(t)
+        end
+        defp compile_dependencies([]) do
             []
         end
     end

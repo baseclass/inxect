@@ -34,11 +34,9 @@ defmodule InxectTest do
 end
 
 defmodule Registry do
-  defimpl Inxect.DI.Registry, for: Atom do
-    def resolve(:localizer) do
-      EnglishLocalizer
-    end
-  end
+  use Inxect.Registry
+  
+  register { :localizer, EnglishLocalizer }
 end
 
 defmodule Greeter do
