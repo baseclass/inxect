@@ -3,7 +3,7 @@ defmodule Inxect.Mixfile do
 
   def project do
     [app: :inxect,
-     version: "0.1.1",
+     version: "0.1.2",
      description: "Package to make dependency injection easier, see documentation for more infos",
      package: package(),
      elixir: "~> 1.3",

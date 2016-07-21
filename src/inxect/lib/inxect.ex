@@ -100,6 +100,9 @@ defmodule Inxect do
             publicFun = create_without_dependencies(injects, block)
             privateFun = make_private(block)
             testFun = create_test_fun(block)
+            #Macro.to_string(publicFun) |> IO.puts
+            #Macro.to_string(privateFun) |> IO.puts
+            #Macro.to_string(testFun) |> IO.puts
             quote do
                 unquote(publicFun)
                 unquote(privateFun)
@@ -115,7 +118,7 @@ defmodule Inxect do
         defp make_private(block) do
             Macro.prewalk(block,fn 
                                 ({:def, opt, [ { name, l, args } , impl ] }) ->
-                                    {:defp, opt, [ { get_private_function_name(name), l, args } , impl ] }
+                                    {:defp, opt, [ { get_private_function_name(name), l, args |> remove_optional_params } , impl ] }
                                 node -> node
                             end)
         end
@@ -123,7 +126,7 @@ defmodule Inxect do
         defp create_test_fun(block) do
             Macro.prewalk(block,fn 
                                 ({:def, opt, [ { name, l, args } , _impl ] }) ->
-                                    impl = [do: {get_private_function_name(name), [], args}]
+                                    impl = [do: {get_private_function_name(name), [], args |> remove_optional_params}]
                                     {:def, opt, [ { String.to_atom("test_#{name}"), l, args }, impl ] }
                                 node -> node
                             end)
@@ -156,7 +159,7 @@ defmodule Inxect do
             [ {:resolve, [], [dep]} ] ++ replace_dependencies(dep, t)
         end
         defp replace_dependencies(dep, [h | t]) do
-            [ h ] ++ replace_dependencies(dep, t)
+            [ h |> remove_optional_param ] ++ replace_dependencies(dep, t)
         end
         defp replace_dependencies(_dep, []) do
             []
@@ -179,6 +182,21 @@ defmodule Inxect do
         defp remove_dependencies(_dep, []) do
             []
         end
+
+        defp remove_optional_params([ h | t ]) do
+            [ h |> remove_optional_param ] ++ remove_optional_params(t)
+        end
+        defp remove_optional_params([]) do
+            []
+        end
+
+        defp remove_optional_param({:\\, _, [ param, _defvalue ]}) do
+            param
+        end
+        defp remove_optional_param(param) do
+            param
+        end
+
     end
 
     defmodule Registry do
