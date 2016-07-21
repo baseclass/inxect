@@ -8,7 +8,7 @@ https://hexdocs.pm/inxect
 
 ## Hex
 
-[![Hex.pm](https://img.shields.io/hexpm/dt/inxect.svg?maxAge=2592000)](https://hex.pm/packages/inxect)
+[![Hex.pm](https://img.shields.io/hexpm/dt/inxect.svg)](https://hex.pm/packages/inxect)
 [![Hex.pm](https://img.shields.io/hexpm/v/inxect.svg?maxAge=2592000)](https://hex.pm/packages/inxect)
 
 ## Example
