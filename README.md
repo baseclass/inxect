@@ -24,7 +24,7 @@ defmodule Greeter do
 
     @spec sayHello(String.t) :: { :ok, String.t }
     defi sayHello(who, localizer) do
-        { :ok, \#{localizer.getHello()} \#{who}}
+        { :ok, "#{localizer.getHello()} #{who}"}
     end
 end
 

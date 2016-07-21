@@ -14,7 +14,7 @@ defmodule Inxect do
 
             @spec sayHello(String.t) :: { :ok, String.t }
             defi sayHello(who, localizer) do
-                { :ok, \#{localizer.getHello()} \#{who}}
+                { :ok, "#{localizer.getHello()} #{who}"}
             end
         end
 
@@ -79,14 +79,14 @@ defmodule Inxect do
         will be compiled like that:
 
             def sayHello(who) do
-                sayHello(who, resolve(:localizer))
+                p_sayHello(who, resolve(:localizer))
             end
-            defp sayHello(who, localizer) do
+            defp p_sayHello(who, localizer) do
                 {:ok, "\#{localizer.getHello()} \#{who}"}
             end
 
             def(test_sayHello(who, localizer)) do
-                sayHello(who, localizer)
+                p_sayHello(who, localizer)
             end
         """
         defmacro defi(head, body) do
@@ -114,8 +114,8 @@ defmodule Inxect do
 
         defp make_private(block) do
             Macro.prewalk(block,fn 
-                                ({:def, opt, impl }) ->
-                                    {:defp, opt, impl }
+                                ({:def, opt, [ { name, l, args } , impl ] }) ->
+                                    {:defp, opt, [ { get_private_function_name(name), l, args } , impl ] }
                                 node -> node
                             end)
         end
@@ -123,10 +123,14 @@ defmodule Inxect do
         defp create_test_fun(block) do
             Macro.prewalk(block,fn 
                                 ({:def, opt, [ { name, l, args } , _impl ] }) ->
-                                    impl = [do: {name, [], args}]
+                                    impl = [do: {get_private_function_name(name), [], args}]
                                     {:def, opt, [ { String.to_atom("test_#{name}"), l, args }, impl ] }
                                 node -> node
                             end)
+        end
+
+        defp get_private_function_name(name) do
+            String.to_atom("p_#{name}")
         end
 
         defp create_without_dependencies(injects, block) do
@@ -134,7 +138,7 @@ defmodule Inxect do
                                 ({:def, opt, [ { name, l, args } , _impl ] }) ->
                                     nargs = remove_all_dependencies(injects, args)
                                     pass = replace_all_dependencies(injects, args)
-                                    impl = [do: {name, [], pass}]
+                                    impl = [do: {get_private_function_name(name), [], pass}]
                                     {:def, opt, [ { name, l, nargs }, impl ] }
                                 node -> node
                             end)

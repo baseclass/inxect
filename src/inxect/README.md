@@ -8,7 +8,7 @@ Package to make dependency injection easier, see documentation for more infos
 
     ```elixir
     def deps do
-      [{:inxect, "~> 0.1.0"}]
+      [{:inxect, "~> 0.1.1"}]
     end
     ```
 
